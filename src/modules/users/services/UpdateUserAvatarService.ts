@@ -5,6 +5,7 @@ import uploadConfig from '@config/upload';
 import AppError from '@shared/errors/AppError';
 import User from '../infra/typeorm/entities/User';
 import IUserRepository from '../repositories/IUsersRepository';
+import IStorageProvider from '@shared/container/providers/StorageProvider/models/IStorageProvider';
 import { injectable, inject } from 'tsyringe';
 
 interface IRequest {
@@ -17,6 +18,9 @@ class UpdateUserAvatarService {
   constructor(
     @inject('UsersRepository')
     private usersRepository: IUserRepository,
+
+    @inject('StorageProvider')
+    private storageProvider: IStorageProvider,
   ) {}
 
   public async execute({ user_id, avatarFilename }: IRequest): Promise<User> {
@@ -27,17 +31,15 @@ class UpdateUserAvatarService {
     }
 
     if (user.avatar) {
-      const userAvatarFilepath = path.join(uploadConfig.directory, user.avatar);
-      const userAvatarExists = await fs.promises.stat(userAvatarFilepath);
-
-      if (userAvatarExists) {
-        await fs.promises.unlink(userAvatarFilepath);
-      }
-
-      user.avatar = avatarFilename;
-
-      await this.usersRepository.save(user);
+      await this.storageProvider.deleteFile(user.avatar);
     }
+
+    const filename = await this.storageProvider.saveFile(avatarFilename);
+
+    user.avatar = filename;
+
+    await this.usersRepository.save(user);
+
     return user;
   }
 }
