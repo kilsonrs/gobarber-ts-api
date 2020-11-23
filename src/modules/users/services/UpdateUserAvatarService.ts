@@ -1,8 +1,8 @@
 import AppError from '@shared/errors/AppError';
-import User from '../infra/typeorm/entities/User';
-import IUserRepository from '../repositories/IUsersRepository';
 import IStorageProvider from '@shared/container/providers/StorageProvider/models/IStorageProvider';
 import { injectable, inject } from 'tsyringe';
+import User from '../infra/typeorm/entities/User';
+import IUserRepository from '../repositories/IUsersRepository';
 
 interface IRequest {
   user_id: string;
@@ -31,7 +31,7 @@ class UpdateUserAvatarService {
     }
 
     const filename = await this.storageProvider.saveFile(avatarFilename);
-
+    console.log('chegou aqui');
     user.avatar = filename;
 
     await this.usersRepository.save(user);
